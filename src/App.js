@@ -14,9 +14,10 @@ query getTodos {
 
 
 function App() {
-    const {data, loading} = useQuery(GET_TODOS)
+    const {data, loading,error} = useQuery(GET_TODOS)
 
-    if (loading) return <div>loading...</div>
+    if (loading) return <div>loading todos...</div>
+    if (error) return <div>Error fetching todos</div>
 
 
     return <div> {data.todos.map(todo=>(
