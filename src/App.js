@@ -14,14 +14,19 @@ query getTodos {
 
 
 function App() {
-    const stuff = useQuery(GET_TODOS)
-console.log(stuff)
+    const {data, loading} = useQuery(GET_TODOS)
 
-  return (
-    <div >
-      app
-    </div>
-  );
+    if (loading) return <div>loading...</div>
+
+
+    return <div> {data.todos.map(todo=>(
+        <p key={todo.id}>
+            <span>
+                {todo.text}
+            </span>
+            <button>&times;</button>
+        </p>
+    ))} </div>;
 }
 
 export default App;
