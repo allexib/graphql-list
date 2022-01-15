@@ -12,6 +12,18 @@ query getTodos {
 }
 `
 
+const ADD_TODO = gql`
+mutation addTodo($text: String!) {
+  insert_todos(objects: {text: $text}) {
+    returning {
+      done
+      id
+      text
+    }
+  }
+}
+`
+
 const TOGGLE_TODO = gql`
 mutation toggleTodo($id: uuid!, $done: Boolean!) {
   update_todos(where: {id: {_eq: $id}}, _set: {done: $done}) {
@@ -25,12 +37,22 @@ mutation toggleTodo($id: uuid!, $done: Boolean!) {
 `
 
 function App() {
+    const [todoText, setTodoText] = React.useState('')
     const {data, loading, error} = useQuery(GET_TODOS)
     const [toggleTodo] = useMutation(TOGGLE_TODO)
+    const [addTodo] = useMutation(ADD_TODO)
 
     async function handleToggleTodo({id, done}) {
         const data = await toggleTodo({variables: {id, done: !done}})
-        console.log(data)
+        console.log('toggle todo', data)
+    }
+
+    async function handleAddTodo(event) {
+        event.preventDefault()
+        if (!todoText.trim()) return
+        const data = await addTodo({variables: {text: todoText}})
+        console.log('added todo', data)
+        setTodoText('')
     }
 
     if (loading) return <div>loading todos...</div>
@@ -42,10 +64,12 @@ function App() {
             <span role='img' aria-label='Checkmark'>🎂✔</span>
         </h1>
         {/*Todo Form*/}
-        <form className="mb3">
+        <form onSubmit={handleAddTodo} className="mb3">
             <input className='pa2 f4 b--dashed'
                    type='text'
                    placeholder='write y todo'
+                   onChange={event => setTodoText(event.target.value)}
+                   value={todoText}
             />
             <button className='pa2 f4 bg-green' type='submit'>create</button>
         </form>
