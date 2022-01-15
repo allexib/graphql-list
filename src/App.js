@@ -36,11 +36,26 @@ mutation toggleTodo($id: uuid!, $done: Boolean!) {
 }
 `
 
+const DELETE_TODO = gql`
+mutation deleteTodo($id: uuid) {
+  delete_todos(where: {id: {_eq: $id}}) {
+    returning {
+      done
+      id
+      text
+    }
+  }
+}
+`
+
 function App() {
     const [todoText, setTodoText] = React.useState('')
     const {data, loading, error} = useQuery(GET_TODOS)
     const [toggleTodo] = useMutation(TOGGLE_TODO)
-    const [addTodo] = useMutation(ADD_TODO)
+    const [addTodo] = useMutation(ADD_TODO, {
+        onCompleted: () => setTodoText('')
+    })
+    const [deleteTodo] = useMutation(DELETE_TODO)
 
     async function handleToggleTodo({id, done}) {
         const data = await toggleTodo({variables: {id, done: !done}})
@@ -52,12 +67,18 @@ function App() {
         if (!todoText.trim()) return
         const data = await addTodo({
             variables: {text: todoText},
-            refetchQueries: [
-                {query: GET_TODOS}
-            ]
+            refetchQueries: [{query: GET_TODOS}]
         })
         console.log('added todo', data)
-        setTodoText('')
+        // setTodoText('')
+    }
+
+    async function handleDeleteTodo({id}) {
+        const isConfirmed = window.confirm('really delete?')
+        if (isConfirmed) {
+            const data = await deleteTodo({variables: {id}})
+            console.log('deleted todo', data)
+        }
     }
 
     if (loading) return <div>loading todos...</div>
@@ -85,7 +106,8 @@ function App() {
             <span className={`pointer list pa1 f3 ${todo.done && 'strike'}`}>
                 {todo.text}
             </span>
-                    <button className='bg-transparent bn f4'>
+                    <button onClick={() => handleDeleteTodo(todo)}
+                            className='bg-transparent bn f4'>
                         <span className='red'>&times;</span>
 
                     </button>
