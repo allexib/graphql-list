@@ -1,5 +1,5 @@
 import React from 'react'
-import {useQuery} from '@apollo/react-hooks'
+import {useQuery, useMutation} from '@apollo/react-hooks'
 import {gql} from 'apollo-boost'
 
 const GET_TODOS = gql`
@@ -12,9 +12,26 @@ query getTodos {
 }
 `
 
+const TOGGLE_TODO = gql`
+mutation toggleTodo($id: uuid!, $done: Boolean!) {
+  update_todos(where: {id: {_eq: $id}}, _set: {done: $done}) {
+    returning {
+      done
+      id
+      text
+    }
+  }
+}
+`
 
 function App() {
     const {data, loading, error} = useQuery(GET_TODOS)
+    const [toggleTodo] = useMutation(TOGGLE_TODO)
+
+    async function handleToggleTodo({id, done}) {
+        const data = await toggleTodo({variables: {id, done: !done}})
+        console.log(data)
+    }
 
     if (loading) return <div>loading todos...</div>
     if (error) return <div>Error fetching todos</div>
@@ -35,8 +52,8 @@ function App() {
         {/*Todo List*/}
         <div className='flex item-center justify-center flex-column'>
             {data.todos.map(todo => (
-                <p key={todo.id}>
-            <span className='pointer list pa1 f3'>
+                <p onDoubleClick={() => handleToggleTodo(todo)} key={todo.id}>
+            <span className={`pointer list pa1 f3 ${todo.done && 'strike'}`}>
                 {todo.text}
             </span>
                     <button className='bg-transparent bn f4'>
