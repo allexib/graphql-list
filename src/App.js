@@ -50,7 +50,12 @@ function App() {
     async function handleAddTodo(event) {
         event.preventDefault()
         if (!todoText.trim()) return
-        const data = await addTodo({variables: {text: todoText}})
+        const data = await addTodo({
+            variables: {text: todoText},
+            refetchQueries: [
+                {query: GET_TODOS}
+            ]
+        })
         console.log('added todo', data)
         setTodoText('')
     }
